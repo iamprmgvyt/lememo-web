@@ -70,16 +70,17 @@ class DiscordNotesAPITester:
         """Test health check endpoint"""
         return self.run_test("Health Check", "GET", "", 200)
 
-    def test_register(self):
-        """Test user registration"""
+    def test_register_with_password(self):
+        """Test user registration with password"""
         success, response = self.run_test(
-            "User Registration",
+            "User Registration with Password",
             "POST",
             "auth/register",
             200,
             data={
                 "discord_user_id": self.test_user_id,
-                "username": self.test_username
+                "username": self.test_username,
+                "password": self.test_password
             }
         )
         if success and 'access_token' in response:
@@ -88,14 +89,17 @@ class DiscordNotesAPITester:
             return True
         return False
 
-    def test_login(self):
-        """Test user login"""
+    def test_login_with_password(self):
+        """Test user login with password"""
         success, response = self.run_test(
-            "User Login",
+            "User Login with Password",
             "POST",
             "auth/login",
             200,
-            data={"discord_user_id": self.test_user_id}
+            data={
+                "discord_user_id": self.test_user_id,
+                "password": self.test_password
+            }
         )
         if success and 'access_token' in response:
             self.token = response['access_token']
@@ -103,17 +107,58 @@ class DiscordNotesAPITester:
             return True
         return False
 
+    def test_login_wrong_password(self):
+        """Test login with wrong password (should fail)"""
+        return self.run_test(
+            "Login with Wrong Password (should fail)",
+            "POST",
+            "auth/login",
+            401,
+            data={
+                "discord_user_id": self.test_user_id,
+                "password": "wrongpassword123"
+            }
+        )
+
+    def test_register_missing_password(self):
+        """Test registration without password (should fail)"""
+        return self.run_test(
+            "Registration Missing Password (should fail)",
+            "POST",
+            "auth/register",
+            422,  # Validation error
+            data={
+                "discord_user_id": "111222333444555666",
+                "username": "TestUserNoPassword"
+            }
+        )
+
+    def test_login_missing_password(self):
+        """Test login without password (should fail)"""
+        return self.run_test(
+            "Login Missing Password (should fail)",
+            "POST",
+            "auth/login",
+            422,  # Validation error
+            data={
+                "discord_user_id": self.test_user_id
+            }
+        )
+
     def test_auth_flow(self):
         """Test authentication flow - try login first, then register if needed"""
-        print(f"\n🔍 Testing Authentication Flow...")
+        print(f"\n🔍 Testing Password-Based Authentication Flow...")
         
-        # First try to login
+        # First try to login with password
         success, response = self.run_test(
-            "Login Attempt",
+            "Login Attempt with Password",
             "POST",
             "auth/login",
             200,
-            data={"discord_user_id": self.test_user_id}
+            data={
+                "discord_user_id": self.test_user_id,
+                "password": self.test_password
+            }
         )
         
         if success and 'access_token' in response:
@@ -121,16 +166,17 @@ class DiscordNotesAPITester:
             print(f"   ✅ Login successful, token obtained: {self.token[:20]}...")
             return True
         
-        # If login failed, try registration
-        print("   Login failed, attempting registration...")
+        # If login failed, try registration with password
+        print("   Login failed, attempting registration with password...")
         success, response = self.run_test(
-            "Registration Attempt",
+            "Registration Attempt with Password",
             "POST",
             "auth/register",
             200,
             data={
                 "discord_user_id": self.test_user_id,
-                "username": self.test_username
+                "username": self.test_username,
+                "password": self.test_password
             }
         )
         
