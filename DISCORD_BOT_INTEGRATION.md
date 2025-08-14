@@ -202,7 +202,7 @@ client.on('messageCreate', async (message) => {
 
 Users can visit the web interface to:
 
-1. **Sign In/Sign Up** with their Discord User ID
+1. **Sign In/Sign Up** with their Discord User ID and a secure password
 2. **View All Notes** taken via Discord commands  
 3. **Search & Filter** notes by content or server
 4. **Edit Notes** directly in the web interface
@@ -212,7 +212,12 @@ Users can visit the web interface to:
 ### **How Users Get Their Discord User ID:**
 1. Enable Developer Mode in Discord (Settings → Advanced → Developer Mode)
 2. Right-click their username → Copy ID
-3. Use this ID to sign up on the web interface
+3. Use this ID along with a chosen password to sign up on the web interface
+
+### **Security Features:**
+- **Password Protection**: All accounts require a secure password
+- **Password Hashing**: Passwords are securely hashed using bcrypt
+- **JWT Authentication**: Secure token-based authentication for web sessions
 
 ---
 
