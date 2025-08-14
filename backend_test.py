@@ -274,7 +274,8 @@ class DiscordNotesAPITester:
             400,
             data={
                 "discord_user_id": self.test_user_id,
-                "username": self.test_username
+                "username": self.test_username,
+                "password": self.test_password
             }
         )
 
@@ -285,7 +286,10 @@ class DiscordNotesAPITester:
             "POST",
             "auth/login",
             404,
-            data={"discord_user_id": "999999999999999999"}
+            data={
+                "discord_user_id": "999999999999999999",
+                "password": "somepassword"
+            }
         )
 
 def main():
