@@ -169,7 +169,7 @@ async def create_note(note_data: NoteCreate):
 
 @api_router.get("/notes", response_model=List[Note])
 async def get_notes(
-    current_user: User = Depends(get_current_user),
+    current_user: UserResponse = Depends(get_current_user),
     search: Optional[str] = None,
     server_id: Optional[str] = None,
     limit: int = 100
