@@ -249,7 +249,7 @@ def main():
     # Test sequence
     tests = [
         ("Health Check", tester.test_health_check),
-        ("User Registration", tester.test_register),
+        ("Authentication Flow", tester.test_auth_flow),
         ("Get Current User", tester.test_get_me),
         ("Create Note", tester.test_create_note),
         ("Get Notes", tester.test_get_notes),
