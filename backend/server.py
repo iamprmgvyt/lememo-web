@@ -38,14 +38,23 @@ class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     discord_user_id: str
     username: str
+    password_hash: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserResponse(BaseModel):
+    id: str
+    discord_user_id: str
+    username: str
+    created_at: datetime
 
 class UserCreate(BaseModel):
     discord_user_id: str
     username: str
+    password: str
 
 class UserLogin(BaseModel):
     discord_user_id: str
+    password: str
 
 class Note(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
