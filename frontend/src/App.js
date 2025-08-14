@@ -47,10 +47,11 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (discordUserId) => {
+  const login = async (discordUserId, password) => {
     try {
       const response = await axios.post(`${API}/auth/login`, {
-        discord_user_id: discordUserId
+        discord_user_id: discordUserId,
+        password: password
       });
       const { access_token } = response.data;
       localStorage.setItem('token', access_token);
@@ -62,11 +63,12 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (discordUserId, username) => {
+  const register = async (discordUserId, username, password) => {
     try {
       const response = await axios.post(`${API}/auth/register`, {
         discord_user_id: discordUserId,
-        username: username
+        username: username,
+        password: password
       });
       const { access_token } = response.data;
       localStorage.setItem('token', access_token);
