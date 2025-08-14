@@ -4,9 +4,9 @@
 
 ### **What's Built:**
 
-1. **Web Interface**: Sign in/Sign up with Discord User ID + Notes management dashboard
-2. **API Backend**: FastAPI with JWT authentication and full CRUD for notes
-3. **Database**: MongoDB storing users and notes
+1. **Web Interface**: Sign in/Sign up with Discord User ID + Password + Notes management dashboard
+2. **API Backend**: FastAPI with JWT authentication, password protection, and full CRUD for notes
+3. **Database**: MongoDB storing users (with hashed passwords) and notes
 4. **Integration Ready**: API endpoints for your JavaScript Discord bot
 
 ---
@@ -14,6 +14,27 @@
 ## 📋 **API Endpoints for Your JavaScript Discord Bot**
 
 ### **Base URL:** `https://discord-notes.preview.emergentagent.com/api`
+
+### **Authentication Endpoints:**
+
+#### **1. Register User**
+```javascript
+POST /api/auth/register
+{
+  "discord_user_id": "123456789012345678",
+  "username": "MyUsername",
+  "password": "securepassword123"
+}
+```
+
+#### **2. Login User**  
+```javascript
+POST /api/auth/login
+{
+  "discord_user_id": "123456789012345678",
+  "password": "securepassword123"
+}
+```
 
 ### **Bot Endpoints (No Auth Required):**
 
