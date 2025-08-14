@@ -112,8 +112,15 @@ async def register(user_data: UserCreate):
     if existing_user:
         raise HTTPException(status_code=400, detail="User already exists")
     
+    # Hash password
+    password_hash = pwd_context.hash(user_data.password)
+    
     # Create new user
-    user = User(**user_data.dict())
+    user = User(
+        discord_user_id=user_data.discord_user_id,
+        username=user_data.username,
+        password_hash=password_hash
+    )
     await db.users.insert_one(user.dict())
     
     # Create access token
@@ -128,13 +135,17 @@ async def login(user_data: UserLogin):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Verify password
+    if not pwd_context.verify(user_data.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
     # Create access token
     access_token = create_access_token({"discord_user_id": user_data.discord_user_id})
     
     return {"access_token": access_token, "token_type": "bearer"}
 
-@api_router.get("/auth/me", response_model=User)
-async def get_me(current_user: User = Depends(get_current_user)):
+@api_router.get("/auth/me", response_model=UserResponse)
+async def get_me(current_user: UserResponse = Depends(get_current_user)):
     return current_user
 
 # Notes endpoints
