@@ -10,8 +10,10 @@ class DiscordNotesAPITester:
         self.token = None
         self.tests_run = 0
         self.tests_passed = 0
-        self.test_user_id = "123456789012345678"
-        self.test_username = "TestUser"
+        # Using test credentials from the review request
+        self.test_user_id = "999888777666555444"
+        self.test_username = "PasswordTestUser"
+        self.test_password = "securetest123"
         self.created_note_id = None
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
