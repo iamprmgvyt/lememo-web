@@ -10,13 +10,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './com
 import { Badge } from './components/ui/badge';
 import { Textarea } from './components/ui/textarea';
 import { Alert, AlertDescription } from './components/ui/alert';
-import { Search, Plus, Edit2, Trash2, User, LogOut } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, User, LogOut, Eye, EyeOff } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Set up axios defaults
 axios.defaults.headers.common['Content-Type'] = 'application/json';
+
+// Validation utilities
+const validateDiscordUserId = (id) => {
+  if (!id || !id.trim()) return "Discord User ID is required";
+  const trimmedId = id.trim();
+  if (!trimmedId.match(/^\d+$/)) return "Discord User ID must contain only numbers";
+  if (trimmedId.length < 17 || trimmedId.length > 19) return "Discord User ID must be 17-19 digits long";
+  if (parseInt(trimmedId) < 100000000000000000) return "Invalid Discord User ID - please check your ID";
+  return null;
+};
+
+const validateUsername = (username) => {
+  if (!username || !username.trim()) return "Username is required";
+  const trimmed = username.trim();
+  if (trimmed.length < 2) return "Username must be at least 2 characters long";
+  if (trimmed.length > 32) return "Username must be no more than 32 characters long";
+  return null;
+};
+
+const validatePassword = (password) => {
+  if (!password) return "Password is required";
+  if (password.length < 6) return "Password must be at least 6 characters long";
+  return null;
+};
 
 // Auth Context
 const AuthContext = React.createContext();
@@ -59,7 +83,11 @@ const AuthProvider = ({ children }) => {
       setToken(access_token);
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || 'Login failed' };
+      const errorMessage = error.response?.data?.detail || 
+                          (error.response?.data?.detail && Array.isArray(error.response.data.detail) 
+                            ? error.response.data.detail.map(e => e.msg).join(', ')
+                            : 'Login failed');
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -76,7 +104,11 @@ const AuthProvider = ({ children }) => {
       setToken(access_token);
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || 'Registration failed' };
+      const errorMessage = error.response?.data?.detail || 
+                          (error.response?.data?.detail && Array.isArray(error.response.data.detail) 
+                            ? error.response.data.detail.map(e => e.msg).join(', ')
+                            : 'Registration failed');
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -108,43 +140,61 @@ const Auth = () => {
   const [discordUserId, setDiscordUserId] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuth();
+
+  const validateForm = () => {
+    const errors = {};
+    
+    const discordIdError = validateDiscordUserId(discordUserId);
+    if (discordIdError) errors.discordUserId = discordIdError;
+    
+    if (!isLogin) {
+      const usernameError = validateUsername(username);
+      if (usernameError) errors.username = usernameError;
+    }
+    
+    const passwordError = validatePassword(password);
+    if (passwordError) errors.password = passwordError;
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
+
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
-
-    if (!discordUserId.trim()) {
-      setError('Discord User ID is required');
-      setLoading(false);
-      return;
-    }
-
-    if (!password.trim()) {
-      setError('Password is required');
-      setLoading(false);
-      return;
-    }
 
     let result;
     if (isLogin) {
-      result = await login(discordUserId, password);
+      result = await login(discordUserId.trim(), password);
     } else {
-      if (!username.trim()) {
-        setError('Username is required for registration');
-        setLoading(false);
-        return;
-      }
-      result = await register(discordUserId, username, password);
+      result = await register(discordUserId.trim(), username.trim(), password);
     }
 
     if (!result.success) {
       setError(result.error);
     }
     setLoading(false);
+  };
+
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setError('');
+    setFieldErrors({});
+    setDiscordUserId('');
+    setUsername('');
+    setPassword('');
   };
 
   return (
@@ -162,15 +212,24 @@ const Auth = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Discord User ID
+                Discord User ID *
               </label>
               <Input
                 type="text"
                 value={discordUserId}
-                onChange={(e) => setDiscordUserId(e.target.value)}
+                onChange={(e) => {
+                  setDiscordUserId(e.target.value);
+                  if (fieldErrors.discordUserId) {
+                    setFieldErrors(prev => ({ ...prev, discordUserId: null }));
+                  }
+                }}
                 placeholder="123456789012345678"
                 required
+                className={fieldErrors.discordUserId ? 'border-red-500' : ''}
               />
+              {fieldErrors.discordUserId && (
+                <p className="text-red-500 text-xs mt-1">{fieldErrors.discordUserId}</p>
+              )}
               <p className="text-xs text-gray-500 mt-1">
                 Find this in Discord: Settings → Advanced → Developer Mode → Right-click your name → Copy ID
               </p>
@@ -179,29 +238,61 @@ const Auth = () => {
             {!isLogin && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Username
+                  Username *
                 </label>
                 <Input
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    if (fieldErrors.username) {
+                      setFieldErrors(prev => ({ ...prev, username: null }));
+                    }
+                  }}
                   placeholder="Your display name"
                   required={!isLogin}
+                  className={fieldErrors.username ? 'border-red-500' : ''}
                 />
+                {fieldErrors.username && (
+                  <p className="text-red-500 text-xs mt-1">{fieldErrors.username}</p>
+                )}
               </div>
             )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
+                Password *
               </label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Your password"
-                required
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) {
+                      setFieldErrors(prev => ({ ...prev, password: null }));
+                    }
+                  }}
+                  placeholder="Your password"
+                  required
+                  className={fieldErrors.password ? 'border-red-500 pr-10' : 'pr-10'}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {fieldErrors.password && (
+                <p className="text-red-500 text-xs mt-1">{fieldErrors.password}</p>
+              )}
+              {!isLogin && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Must be at least 6 characters long
+                </p>
+              )}
             </div>
 
             {error && (
@@ -218,7 +309,7 @@ const Auth = () => {
           <div className="mt-4 text-center">
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={toggleMode}
               className="text-sm text-blue-500 hover:text-blue-700"
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
@@ -235,6 +326,7 @@ const Dashboard = () => {
   const [notes, setNotes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [editContent, setEditContent] = useState('');
   const { user, logout } = useAuth();
@@ -245,7 +337,8 @@ const Dashboard = () => {
 
   const fetchNotes = async (search = '') => {
     try {
-      setLoading(true);
+      setLoading(search === '');
+      setSearchLoading(search !== '');
       const params = search ? { search } : {};
       const response = await axios.get(`${API}/notes`, { params });
       setNotes(response.data);
@@ -253,6 +346,7 @@ const Dashboard = () => {
       console.error('Failed to fetch notes:', error);
     } finally {
       setLoading(false);
+      setSearchLoading(false);
     }
   };
 
@@ -306,6 +400,7 @@ const Dashboard = () => {
               <div className="flex items-center space-x-2">
                 <User className="h-4 w-4 text-gray-500" />
                 <span className="text-sm text-gray-700">{user?.username}</span>
+                <span className="text-xs text-gray-400">({user?.discord_user_id})</span>
               </div>
               <Button variant="ghost" size="sm" onClick={logout}>
                 <LogOut className="h-4 w-4" />
@@ -330,7 +425,9 @@ const Dashboard = () => {
                 className="pl-10"
               />
             </div>
-            <Button type="submit">Search</Button>
+            <Button type="submit" disabled={searchLoading}>
+              {searchLoading ? 'Searching...' : 'Search'}
+            </Button>
             {searchTerm && (
               <Button 
                 variant="outline" 
@@ -343,6 +440,13 @@ const Dashboard = () => {
               </Button>
             )}
           </form>
+        </div>
+
+        {/* Stats */}
+        <div className="mb-6">
+          <p className="text-sm text-gray-600">
+            {searchTerm ? `Found ${notes.length} notes matching "${searchTerm}"` : `${notes.length} total notes`}
+          </p>
         </div>
 
         {/* Notes List */}
@@ -412,9 +516,10 @@ const Dashboard = () => {
                     )}
                   </div>
                   <div className="text-xs text-gray-500">
-                    Created: {formatDate(note.created_at)}
+                    <span className="font-medium">ID:</span> {note.id.substring(0, 8)}... • 
+                    <span className="font-medium"> Created:</span> {formatDate(note.created_at)}
                     {note.updated_at !== note.created_at && (
-                      <span> • Updated: {formatDate(note.updated_at)}</span>
+                      <span> • <span className="font-medium">Updated:</span> {formatDate(note.updated_at)}</span>
                     )}
                   </div>
                 </CardContent>
