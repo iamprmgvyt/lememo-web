@@ -110,6 +110,24 @@ class NoteCreate(BaseModel):
     server_name: Optional[str] = None
     channel_id: Optional[str] = None
     channel_name: Optional[str] = None
+    
+    @validator('discord_user_id')
+    def validate_discord_user_id(cls, v):
+        if not v.isdigit():
+            raise ValueError('Discord User ID must contain only numbers')
+        if len(v) < 17 or len(v) > 19:
+            raise ValueError('Discord User ID must be 17-19 digits long')
+        if int(v) < 100000000000000000:
+            raise ValueError('Invalid Discord User ID - ID too small')
+        return v
+    
+    @validator('content')
+    def validate_content(cls, v):
+        if len(v.strip()) < 1:
+            raise ValueError('Note content cannot be empty')
+        if len(v.strip()) > 2000:
+            raise ValueError('Note content must be no more than 2000 characters')
+        return v.strip()
 
 class NoteUpdate(BaseModel):
     content: str
