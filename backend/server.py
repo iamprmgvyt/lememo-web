@@ -51,10 +51,45 @@ class UserCreate(BaseModel):
     discord_user_id: str
     username: str
     password: str
+    
+    @validator('discord_user_id')
+    def validate_discord_user_id(cls, v):
+        if not v.isdigit():
+            raise ValueError('Discord User ID must contain only numbers')
+        if len(v) < 17 or len(v) > 19:
+            raise ValueError('Discord User ID must be 17-19 digits long')
+        # Discord IDs started around 2015, so they should be > 100000000000000000
+        if int(v) < 100000000000000000:
+            raise ValueError('Invalid Discord User ID - ID too small')
+        return v
+    
+    @validator('username')
+    def validate_username(cls, v):
+        if len(v.strip()) < 2:
+            raise ValueError('Username must be at least 2 characters long')
+        if len(v.strip()) > 32:
+            raise ValueError('Username must be no more than 32 characters long')
+        return v.strip()
+    
+    @validator('password')
+    def validate_password(cls, v):
+        if len(v) < 6:
+            raise ValueError('Password must be at least 6 characters long')
+        return v
 
 class UserLogin(BaseModel):
     discord_user_id: str
     password: str
+    
+    @validator('discord_user_id')
+    def validate_discord_user_id(cls, v):
+        if not v.isdigit():
+            raise ValueError('Discord User ID must contain only numbers')
+        if len(v) < 17 or len(v) > 19:
+            raise ValueError('Discord User ID must be 17-19 digits long')
+        if int(v) < 100000000000000000:
+            raise ValueError('Invalid Discord User ID - ID too small')
+        return v
 
 class Note(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
