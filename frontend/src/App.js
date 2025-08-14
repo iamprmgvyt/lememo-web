@@ -107,6 +107,7 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [discordUserId, setDiscordUserId] = useState('');
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuth();
@@ -122,16 +123,22 @@ const Auth = () => {
       return;
     }
 
+    if (!password.trim()) {
+      setError('Password is required');
+      setLoading(false);
+      return;
+    }
+
     let result;
     if (isLogin) {
-      result = await login(discordUserId);
+      result = await login(discordUserId, password);
     } else {
       if (!username.trim()) {
         setError('Username is required for registration');
         setLoading(false);
         return;
       }
-      result = await register(discordUserId, username);
+      result = await register(discordUserId, username, password);
     }
 
     if (!result.success) {
