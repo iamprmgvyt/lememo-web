@@ -251,6 +251,17 @@ Then: `npm install axios`
 
 1. **Test API directly:**
    ```bash
+   # Register a new user
+   curl -X POST "https://discord-notes.preview.emergentagent.com/api/auth/register" \
+   -H "Content-Type: application/json" \
+   -d '{"discord_user_id": "123456789", "username": "TestUser", "password": "mypassword123"}'
+   
+   # Login with password
+   curl -X POST "https://discord-notes.preview.emergentagent.com/api/auth/login" \
+   -H "Content-Type: application/json" \
+   -d '{"discord_user_id": "123456789", "password": "mypassword123"}'
+   
+   # Create a note (bot endpoint - no auth required)
    curl -X POST "https://discord-notes.preview.emergentagent.com/api/notes" \
    -H "Content-Type: application/json" \
    -d '{"discord_user_id": "123456789", "content": "Test note from curl"}'
@@ -258,7 +269,8 @@ Then: `npm install axios`
 
 2. **Test web interface:**
    - Visit: https://discord-notes.preview.emergentagent.com
-   - Sign up with a Discord User ID
+   - Sign up with a Discord User ID, username, and password
+   - Sign in with the same Discord User ID and password
    - View your notes dashboard
 
 3. **Integration test:**
