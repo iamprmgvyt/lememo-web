@@ -186,14 +186,14 @@ async def get_notes(
     return [Note(**note) for note in notes]
 
 @api_router.get("/notes/{note_id}", response_model=Note)
-async def get_note(note_id: str, current_user: User = Depends(get_current_user)):
+async def get_note(note_id: str, current_user: UserResponse = Depends(get_current_user)):
     note = await db.notes.find_one({"id": note_id, "discord_user_id": current_user.discord_user_id})
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     return Note(**note)
 
 @api_router.put("/notes/{note_id}", response_model=Note)
-async def update_note(note_id: str, note_update: NoteUpdate, current_user: User = Depends(get_current_user)):
+async def update_note(note_id: str, note_update: NoteUpdate, current_user: UserResponse = Depends(get_current_user)):
     note = await db.notes.find_one({"id": note_id, "discord_user_id": current_user.discord_user_id})
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
@@ -204,7 +204,7 @@ async def update_note(note_id: str, note_update: NoteUpdate, current_user: User 
     return Note(**updated_note)
 
 @api_router.delete("/notes/{note_id}")
-async def delete_note(note_id: str, current_user: User = Depends(get_current_user)):
+async def delete_note(note_id: str, current_user: UserResponse = Depends(get_current_user)):
     result = await db.notes.delete_one({"id": note_id, "discord_user_id": current_user.discord_user_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Note not found")
