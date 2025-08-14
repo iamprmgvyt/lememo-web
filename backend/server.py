@@ -102,7 +102,7 @@ async def get_current_user(discord_user_id: str = Depends(verify_token)):
     user = await db.users.find_one({"discord_user_id": discord_user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return User(**user)
+    return UserResponse(**user)
 
 # Auth endpoints
 @api_router.post("/auth/register", response_model=Token)
