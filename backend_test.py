@@ -101,6 +101,45 @@ class DiscordNotesAPITester:
             return True
         return False
 
+    def test_auth_flow(self):
+        """Test authentication flow - try login first, then register if needed"""
+        print(f"\n🔍 Testing Authentication Flow...")
+        
+        # First try to login
+        success, response = self.run_test(
+            "Login Attempt",
+            "POST",
+            "auth/login",
+            200,
+            data={"discord_user_id": self.test_user_id}
+        )
+        
+        if success and 'access_token' in response:
+            self.token = response['access_token']
+            print(f"   ✅ Login successful, token obtained: {self.token[:20]}...")
+            return True
+        
+        # If login failed, try registration
+        print("   Login failed, attempting registration...")
+        success, response = self.run_test(
+            "Registration Attempt",
+            "POST",
+            "auth/register",
+            200,
+            data={
+                "discord_user_id": self.test_user_id,
+                "username": self.test_username
+            }
+        )
+        
+        if success and 'access_token' in response:
+            self.token = response['access_token']
+            print(f"   ✅ Registration successful, token obtained: {self.token[:20]}...")
+            return True
+        
+        print("   ❌ Both login and registration failed")
+        return False
+
     def test_get_me(self):
         """Test get current user"""
         return self.run_test("Get Current User", "GET", "auth/me", 200)
